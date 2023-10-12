@@ -7,12 +7,14 @@ import {
 } from "@thirdweb-dev/react";
 
 import { ethers } from "ethers";
+import { contractABI } from "../utils";
 
 const StateContext = createContext();
 
 export const StateContextProvider = ({ children }) => {
     const { contract } = useContract(
-        "0xFEb87e798Bd44ea534eec9528275A82F9279540C"
+        "0xFEb87e798Bd44ea534eec9528275A82F9279540C",
+        contractABI
     );
 
     const { mutateAsync: createCampaign } = useContractWrite(
@@ -25,19 +27,44 @@ export const StateContextProvider = ({ children }) => {
 
     const publishCampaign = async (form) => {
         try {
-            const data = await createCampaign([
-                address,
-                form.title,
-                form.description,
-                form.target,
-                new Date(form.deadline).getTime(),
-                form.image,
-            ]);
+            const data = await createCampaign({
+                args: [
+                    address,
+                    form.title,
+                    form.description,
+                    form.target,
+                    new Date(form.deadline).getTime(),
+                    form.image,
+                ],
+            });
 
             console.log("contract call successful", data);
         } catch (error) {
             console.log("contract call failed", error);
         }
+    };
+
+    const getCampaigns = async () => {
+        const campaigns = await contract.call("getCampaigns");
+
+        const parsedCampaigns = campaigns.map((campaign, i) => {
+            return {
+                owner: campaign.owner,
+                title: campaign.title,
+                description: campaign.description,
+                target: ethers.utils.formatEther(campaign.target.toString()),
+                deadline: campaign.deadline.toNumber(),
+                image: campaign.image,
+                amountCollected: ethers.utils.formatEther(
+                    campaign.amountCollected.toString()
+                ),
+                pId: i,
+            };
+        });
+
+        console.log("parsedCampaigns", parsedCampaigns);
+
+        return parsedCampaigns;
     };
 
     return (
@@ -46,7 +73,8 @@ export const StateContextProvider = ({ children }) => {
                 address,
                 contract,
                 connect,
-                createCampaign : publishCampaign,
+                createCampaign: publishCampaign,
+                getCampaigns,
             }}
         >
             {children}
@@ -54,4 +82,4 @@ export const StateContextProvider = ({ children }) => {
     );
 };
 
-export const useStateContext = () => useContext(StateContext); 
+export const useStateContext = () => useContext(StateContext);

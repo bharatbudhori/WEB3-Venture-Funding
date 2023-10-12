@@ -10,7 +10,10 @@ import { StateContextProvider } from "./context";
 const root = ReactDOM.createRoot(document.getElementById("root"));
 
 root.render(
-    <ThirdwebProvider desiredChainId={ChainId.Goerli}>
+    <ThirdwebProvider 
+    activeChain="goerli" 
+    clientId="f59c1b41975f05c33f32ef9b5614e5ba" 
+    >
         <Router>
             <StateContextProvider>
                 <App />
